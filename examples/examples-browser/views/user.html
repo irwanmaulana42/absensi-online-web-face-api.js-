@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script> -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Daftar User</title>
+</head>
+
+<body>
+    <a href="/" class="btn btn-link m-3">
+        <i class="fa fa-toggle-left" style="font-size: 34px;"></i>
+    </a>
+    <div class="container mt-5">
+        <div id="alertya"></div>
+        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+            Tambah User
+        </button>
+        <div class="collapse mt-3" id="collapseExample">
+            <div class="card card-body">
+                <form action="/postUser" method="POST">
+                    <div class="mb-3">
+                        <label for="id_card" class="form-label">ID Card</label>
+                        <input type="number" class="form-control" id="id_card" placeholder="ID Card" name="id_card" autocomplete="off" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleFormControlInput1" class="form-label">Nama</label>
+                        <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="Nama" name="nama" autocomplete="off" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary mb-3">Submit</button>
+                </form>
+            </div>
+        </div>
+
+        <hr>
+        <table class="table table-sm table-bordered table-hover">
+            <thead class="table-light">
+                <th>ID Card</th>
+                <th>Nama</th>
+                <th style="width: 17%;">Banyak gambar di upload</th>
+                <th style="width: 18%;">Created At</th>
+                <th style="width: 5%;">Action</th>
+            </thead>
+            <tbody id="table_user">
+
+            </tbody>
+        </table>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="addImage" tabindex="-1" aria-labelledby="addImageLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addImageLabel">Tambah Gambar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/addImage" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <input type="hidden" name="card_id" id="imageCardId">
+                            <input type="hidden" name="nama" id="imageNama">
+                            <label for="formFileMultiple" class="form-label">Multiple files input example</label>
+                            <input class="form-control" accept='image/*' name="multipleImages" type="file" id="formFileMultiple" multiple required>
+                        </div>
+                        <button type="submit" class="btn btn-primary mb-3">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8" crossorigin="anonymous"></script>
+</body>
+<script>
+    $(document).ready(function() {
+        checkAlert();
+        $.ajax({
+            url: '/getTableUser',
+            dataType: 'json',
+            type: 'GET',
+            success: function(res) {
+                console.log(res);
+                res.forEach((item) => {
+                    $('#table_user').append(
+                        `<tr>
+                            <td>${item.id_card}</td>
+                            <td>${item.nama}</td>
+                            <td>${item.images.length}</td>
+                            <td>${moment(item.created_at).format('DD MMM YYYY HH:mm:ss')}</td>
+                            <td><a href="javascript:void(0)" onclick="addGambar(${item.id_card}, '${item.nama}')" class="btn btn-sm btn-dark">
+                                <i class="fa fa-image"></i>
+                            </a></td>
+                        </tr>`
+                    );
+                })
+            },
+            error: function(err) {
+                console.log(err);
+            }
+        })
+    });
+
+    function addGambar(id_card, nama) {
+        $("#imageCardId").val(id_card);
+        $("#imageNama").val(nama);
+
+        var myModal = new bootstrap.Modal(document.getElementById('addImage'), {
+            backdrop: 'static'
+        })
+        myModal.show();
+    }
+
+    function checkAlert() {
+        var url_string = window.location.href;
+        var url = new URL(url_string);
+        var message = url.searchParams.get("message");
+        console.log(message)
+        if (message !== null) {
+            $('#alertya').append(`
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            `)
+        }
+    }
+</script>
+
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="face-api.js"></script>
+
+    <!-- <script src="js/commons.js"></script> -->
+    <script src="js/faceDetectionControls.js"></script>
+    <!-- <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.css"> -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="js/bbt.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script> -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        #github-link {
+            display: flex !important;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid;
+            margin-bottom: 10px;
+        }
+        
+        #overlay,
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        #facesContainer canvas {
+            margin: 10px;
+        }
+        
+        .margin {
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="/" class="btn btn-link m-3">
+        <i class="fa fa-toggle-left" style="font-size: 34px;"></i>
+    </a>
+    <div class="container p-3">
+        <div class="progress" id="loader">
+            <div class="indeterminate"></div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <div style="position: relative" class="margin">
+                    <video onloadedmetadata="onPlay(this)" id="inputVideo" autoplay muted playsinline></video>
+                    <canvas id="overlay" />
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="progress mb-3">
+                    <div class="progress-bar" role="progressbar" id="progressCount" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="mb-3">
+                    <div id="face_detector_selection_control" class="form-group">
+                        <label class="form-label">Select Face Detector</label>
+                        <select id="selectFaceDetector" class="form-control">
+                            <option value="ssd_mobilenetv1">SSD Mobilenet V1</option>
+                            <option value="tiny_face_detector">Tiny Face Detector</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="name">ID Card</label>
+                    <input class="form-control" disabled value="-" id="card_id" type="text" class="bold">
+                </div>
+                <div class="mb-3">
+                    <label for="name">Nama</label>
+                    <input class="form-control" disabled value="-" id="name" type="text" class="bold">
+                </div>
+                <div class="mb-3 row">
+                    <div class="col-md-3">
+                        <div class=" form-check">
+                            <input type="checkbox" id="hideBoundingBoxesCheckbox" class="form-check-input" onchange="onChangeHideBoundingBoxes(event)" />
+                            <label for="hideBoundingBoxesCheckbox">Hide Bounding Boxes</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class=" form-check">
+                            <input type="checkbox" id="hideLandmarks" class="form-check-input" onchange="onChangeHideLandMarks(event)" />
+                            <label for="hideLandmarks">Hide Landmark</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div id="fps_meter" class="row">
+                        <div class="col-md-6">
+                            <label for="time">Time:</label>
+                            <input class="form-control" disabled value="-" id="time" type="text" class="bold">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fps">Estimated Fps:</label>
+                            <input class="form-control" disabled value="-" id="fps" type="text" class="bold">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalAbsens" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Check Absensi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/absensi" method="POST">
+                        <div class="mb-3">
+                            <label for="name">Nama</label>
+                            <input type="hidden" name="card_id" id="idAbsensi">
+                            <input type="hidden" name="nama" id="namaAbsensi">
+                            <input type="text" disabled class="form-control" id="absensiNama">
+                        </div>
+                        <select class="form-select" name="type">
+                            <option value="masuk">Masuk</option>
+                            <option value="pulang">Pulang</option>
+                        </select>
+                        <button class="btn btn-primary mt-3">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8" crossorigin="anonymous"></script>
+
+<script>
+    let forwardTimes = []
+    let predictedAges = []
+    let withBoxes = true;
+    let withlandMarks = true;
+    let faceMatcher = null;
+    var modalAbsensi;
+    var modalBuka = false;
+    let progressCount = 0;
+    let tempName = '';
+
+    function onChangeHideBoundingBoxes(e) {
+        withBoxes = !$(e.target).prop('checked')
+    }
+
+    function onChangeHideLandMarks(e) {
+        withlandMarks = !$(e.target).prop('checked')
+    }
+
+    function updateTimeStats(timeInMs) {
+        forwardTimes = [timeInMs].concat(forwardTimes).slice(0, 30)
+        const avgTimeInMs = forwardTimes.reduce((total, t) => total + t) / forwardTimes.length
+        $('#time').val(`${Math.round(avgTimeInMs)} ms`)
+        $('#fps').val(`${faceapi.utils.round(1000 / avgTimeInMs)}`)
+    }
+
+    async function onPlay() {
+        const videoEl = $('#inputVideo').get(0)
+
+        if (videoEl.paused || videoEl.ended || !isFaceDetectionModelLoaded())
+            return setTimeout(() => onPlay())
+
+
+        const options = getFaceDetectorOptions()
+        const ts = Date.now()
+
+        const result = await faceapi.detectSingleFace(videoEl, options)
+            .withFaceLandmarks()
+            .withFaceExpressions()
+            .withAgeAndGender()
+            .withFaceDescriptor()
+
+        updateTimeStats(Date.now() - ts)
+
+        if (result) {
+            // const faceMatcher = new faceapi.FaceMatcher(result)
+            const canvas = $('#overlay').get(0)
+            const dims = faceapi.matchDimensions(canvas, videoEl, true)
+            const resizedResult = faceapi.resizeResults(result, dims)
+            const minConfidence = 0.05
+            const bestMatch = faceMatcher.findBestMatch(result.descriptor)
+            if (withBoxes) {
+                faceapi.draw.drawDetections(canvas, resizedResult)
+            }
+            if (withlandMarks) {
+                faceapi.draw.drawFaceLandmarks(canvas, resizedResult)
+            }
+            faceapi.draw.drawFaceExpressions(canvas, resizedResult, minConfidence)
+            const {
+                age,
+                gender,
+                genderProbability,
+                expressions,
+            } = resizedResult
+
+            var getLabel = bestMatch.label.split("__");
+
+            $("#name").val(getLabel[1]);
+            $("#card_id").val(getLabel[0]);
+
+            const interpolatedAge = interpolateAgePredictions(age)
+            new faceapi.draw.DrawTextField(
+                [
+                    `${getLabel[1]}`
+                ],
+                result.detection.box.bottomRight
+            ).draw(canvas)
+            new faceapi.draw.DrawTextField(
+                [
+                    `${faceapi.utils.round(interpolatedAge, 0)} years`,
+                    `${gender} (${faceapi.utils.round(genderProbability)})`
+                ],
+                result.detection.box.topRight
+            ).draw(canvas)
+
+            $("#jenis_kelamin").html(`${gender} (${faceapi.utils.round(genderProbability)})`);
+            $("#umur").html(`${faceapi.utils.round(interpolatedAge, 0)} years`);
+
+            if (progressCount > 95 && progressCount < 101 && modalBuka === false) {
+                openModalAbsensi(getLabel[0], getLabel[1]);
+                modalBuka = true;
+            }
+            if (typeof getLabel[1] !== 'undefined' && progressCount < 100) {
+                progressName(getLabel[1]);
+            }
+        }
+
+        setTimeout(() => onPlay())
+    }
+
+    function progressName(nama) {
+        if (tempName === '') {
+            tempName = nama;
+        }
+
+        if (tempName === nama) {
+            if (progressCount === 100) {
+                progressCount = 100;
+            } else {
+                progressCount += 10;
+            }
+            console.log(progressCount);
+            $("#progressCount").html(progressCount);
+            $("#progressCount").css({
+                width: progressCount + '%'
+            })
+        } else {
+            progressCount = 0;
+            tempName = '';
+        }
+    }
+
+    function interpolateAgePredictions(age) {
+        predictedAges = [age].concat(predictedAges).slice(0, 30)
+        const avgPredictedAge = predictedAges.reduce((total, a) => total + a) / predictedAges.length
+        return avgPredictedAge
+    }
+
+    async function run() {
+        // load face detection and face landmark models
+        await changeFaceDetector(TINY_FACE_DETECTOR)
+        await Promise.all([
+            faceapi.loadFaceLandmarkModel('/'),
+            faceapi.loadFaceExpressionModel('/'),
+            faceapi.nets.ageGenderNet.load('/'),
+            faceapi.loadFaceRecognitionModel('/')
+        ])
+        changeInputSize(224)
+        faceMatcher = await createBbtFaceMatcher();
+        console.log("INITIALIZE FACE MATCHER", faceMatcher);
+        // try to access users webcam and stream the images
+        // to the video element
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {}
+        })
+        const videoEl = $('#inputVideo').get(0)
+        videoEl.srcObject = stream
+    }
+
+    function updateResults() {}
+
+    function openModalAbsensi(card_id, nama) {
+        modalAbsensi.show();
+        $('#idAbsensi').val(card_id);
+        $('#namaAbsensi').val(nama);
+        $('#absensiNama').val(nama);
+    }
+
+    $(document).ready(function() {
+        // renderNavBar('#navbar', 'webcam_face_landmark_detection')
+        initFaceDetectionControls()
+        run()
+    })
+
+    var absensYa = document.getElementById('modalAbsens');
+
+    modalAbsensi = new bootstrap.Modal(absensYa, {
+        keyboard: false
+    })
+
+    absensYa.addEventListener('hidden.bs.modal', function(event) {
+        console.log("MODAL HIDDEN");
+        progressCount = 0;
+        tempName = '';
+        modalBuka = false;
+    })
+</script>
+</body>
+
+</html>

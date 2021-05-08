@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script> -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Index</title>
+</head>
+
+<body>
+    <a href="/" class="btn btn-link m-3">
+        <i class="fa fa-toggle-left" style="font-size: 34px;"></i>
+    </a>
+    <div class="container mt-4">
+        <div id="alertya"></div>
+        <h3>Report</h3>
+        <table class="table table-sm table-bordered mt-3">
+            <thead class="table-light">
+                <th>ID Card</th>
+                <th>Nama</th>
+                <th>Waktu Submit</th>
+                <th>Tipe</th>
+                <th>Created At</th>
+            </thead>
+            <tbody id="tableReports">
+
+            </tbody>
+        </table>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8" crossorigin="anonymous"></script>
+</body>
+<script>
+    $(document).ready(function() {
+        checkAlert();
+        getDataReport();
+    })
+
+    function getDataReport() {
+        $.ajax({
+            url: '/getAllReports',
+            type: 'POST',
+            dataType: 'json',
+            success: function(res) {
+                console.log(res);
+                res.forEach((item) => {
+                    $('#tableReports').append(
+                        `<tr>
+                            <td>${item.card_id}</td>
+                            <td>${item.nama}</td>
+                            <td>${moment(item.timestamp).format('DD MMM YYYY HH:mm:ss')}</td>
+                            <td><span class="badge bg-${(item.type === 'masuk') ? 'primary' : 'secondary'}">${item.type}</span></td>
+                            <td>${moment(item.created_at).format('DD MMM YYYY HH:mm:ss')}</td>
+                        </tr>`
+                    );
+                })
+            },
+            error: function(err) {
+                console.log(err);
+            }
+        })
+    }
+
+    function checkAlert() {
+        var url_string = window.location.href;
+        var url = new URL(url_string);
+        var message = url.searchParams.get("message");
+        console.log(message)
+        if (message !== null) {
+            $('#alertya').append(`
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            `)
+        }
+    }
+</script>
+
+</html>
