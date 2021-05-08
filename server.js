@@ -6,7 +6,7 @@ var fs = require('fs');
 var bodyParser = require("body-parser");
 var multer = require('multer');
 
-var dir = '../images/';
+var dir = './images/';
 
 const app = express()
 
@@ -18,12 +18,11 @@ app.use(express.urlencoded({ extended: true }))
 const viewsDir = path.join(__dirname, 'views')
 app.use(express.static(viewsDir))
 app.use(express.static(path.join(__dirname, './public')))
-app.use(express.static(path.join(__dirname, '../images')))
-app.use(express.static(path.join(__dirname, '../media')))
-app.use(express.static(path.join(__dirname, '../../weights')))
-app.use(express.static(path.join(__dirname, '../../dist')))
+app.use(express.static(path.join(__dirname, './images')))
+app.use(express.static(path.join(__dirname, './media')))
+app.use(express.static(path.join(__dirname, './weights')))
+app.use(express.static(path.join(__dirname, './dist')))
 
-// app.get('/', (req, res) => res.redirect('/face_detection'))
 app.get('/', (req, res) => res.sendFile(path.join(viewsDir, 'index.html')))
 app.get('/absensi', (req, res) => res.sendFile(path.join(viewsDir, 'absensi.html')))
 app.get('/user', (req, res) => res.sendFile(path.join(viewsDir, 'user.html')))
@@ -34,7 +33,7 @@ var storage = multer.diskStorage({
     destination: (req, file, callback) => {
         console.log("REQ DEST", req.body);
         const { card_id, nama } = req.body;
-        callback(null, '../images/' + card_id + '__' + nama + '/');
+        callback(null, './images/' + card_id + '__' + nama + '/');
     },
     filename: (req, file, callback) => {
         const { card_id, nama } = req.body;

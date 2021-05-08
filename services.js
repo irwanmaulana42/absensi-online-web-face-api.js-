@@ -1,5 +1,5 @@
 const fs = require('fs');
-const folderImages = '../images';
+const folderImages = './images';
 
 var connection = require('./conn');
 
